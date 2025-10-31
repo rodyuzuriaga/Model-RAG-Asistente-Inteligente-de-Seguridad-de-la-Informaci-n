@@ -536,75 +536,23 @@ PROFESSIONAL_CSS = """
 
 st.markdown(PROFESSIONAL_CSS, unsafe_allow_html=True)
 
-# Configuraciones - Usar st.secrets para compatibilidad con Streamlit Cloud
-try:
-    # Intentar obtener desde st.secrets (Streamlit Cloud)
-    GOOGLE_API_KEY = st.secrets["GEMINI"]["API_KEY"]
-    MONGODB_URI = st.secrets["MONGODB"]["URI"]
-except:
-    # Fallback para desarrollo local
-    GOOGLE_API_KEY = "tu_api_key_de_gemini_aqui"
-    # URI sin SRV records para evitar problemas de DNS en Streamlit Cloud
-    MONGODB_URI = "mongodb://usuario:password@cluster.mongodb.net:27017/?ssl=true&replicaSet=atlas-xxx-shard-0&authSource=admin&retryWrites=true&w=majority"
+# Configuraciones
+genai.configure(api_key="AIzaSyA5NslXJMWTt63y2MHs9daaCHK0ifVqAMU")
+client = MongoClient("mongodb+srv://rodyuzuriaga:jG8KeOea6LoeLbgi@cluster0.kz9c1wg.mongodb.net/")
+db = client["security_db"]
+collection_evaluations = db["evaluations"]
+collection_risk_records = db["risk_records"]
+collection_documents = db["documents"]
+collection_personnel = db["personnel"]
+collection_reports = db["reports"]
+collection_technova_personnel = db["technova_personnel"]  # Colección específica para TechNova
 
-# Configurar Gemini
-genai.configure(api_key=GOOGLE_API_KEY)
+# Nueva colección para embeddings vectoriales (como en el ejemplo de papa)
+db_embeddings = client["security_embeddings_db"]
+collection_embeddings = db_embeddings["security_vectors"]
 
-# Intentar conectar a MongoDB con manejo de errores mejorado
-mongodb_connected = False
-try:
-    client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)  # 5 segundos timeout
-    # Probar la conexión
-    client.admin.command('ping')
-    mongodb_connected = True
-    st.sidebar.success("✅ Conectado a MongoDB Atlas")
-except Exception as e:
-    mongodb_connected = False
-    st.sidebar.error(f"❌ Error de conexión MongoDB: {str(e)}")
-    st.sidebar.warning("⚠️ La aplicación funcionará en modo limitado sin base de datos")
-    # Crear cliente dummy para evitar errores
-    client = None
-
-# Configurar colecciones solo si hay conexión
-if mongodb_connected:
-    db = client["security_db"]
-    collection_evaluations = db["evaluations"]
-    collection_risk_records = db["risk_records"]
-    collection_documents = db["documents"]
-    collection_personnel = db["personnel"]
-    collection_reports = db["reports"]
-    collection_technova_personnel = db["technova_personnel"]  # Colección específica para TechNova
-
-    # Nueva colección para embeddings vectoriales (como en el ejemplo de papa)
-    db_embeddings = client["security_embeddings_db"]
-    collection_embeddings = db_embeddings["security_vectors"]
-else:
-    # Modo sin conexión - crear objetos dummy
-    collection_evaluations = None
-    collection_risk_records = None
-    collection_documents = None
-    collection_personnel = None
-    collection_reports = None
-    collection_technova_personnel = None
-    collection_embeddings = None
-
-def check_mongodb_connection():
-    """Verifica si hay conexión a MongoDB y muestra mensaje de error si no"""
-    if not mongodb_connected:
-        st.error("❌ No hay conexión a la base de datos MongoDB")
-        st.info("Configura los secrets MONGODB_URI y GOOGLE_API_KEY en Streamlit Cloud")
-        return False
-    return True
-
-def safe_db_operation(operation_func, error_message="Error en operación de base de datos"):
-    """Ejecuta una operación de base de datos de forma segura"""
-    if not check_mongodb_connection():
-        return None
-    try:
-        return operation_func()
-    except Exception as e:
-        st.error(f"❌ {error_message}: {str(e)}")
-        return None
+# Funciones auxiliares
+def generate_advanced_rag_response(query, processed_records=None):
     """
     Genera respuesta RAG avanzada usando datos reales de la base de datos
     """
@@ -1341,48 +1289,13 @@ if page == "Asistente IA" and "rag_inicializado" not in st.session_state:
 if page == "Inicio":
     st.header("Dashboard General")
     
-    if not mongodb_connected:
-        st.error("❌ No hay conexión a la base de datos MongoDB")
-        st.info("Para configurar la conexión:")
-        st.markdown("""
-        1. **Configurar secrets en Streamlit Cloud:**
-           - Ve a tu app en [share.streamlit.io](https://share.streamlit.io)
-           - Haz clic en 'Manage app' → 'Secrets'
-           - Agrega los siguientes secrets:
-        
-        ```toml
-        [GEMINI]
-        API_KEY = "tu_clave_api_de_google_gemini"
-        
-        [MONGODB]
-        URI = "mongodb+srv://usuario:password@cluster.mongodb.net/?retryWrites=true&w=majority"
-        ```
-        
-        2. **Obtener URI de MongoDB Atlas:**
-           - Ve a [cloud.mongodb.com](https://cloud.mongodb.com)
-           - Selecciona tu cluster → 'Connect' → 'Connect your application'
-           - Copia la connection string
-        
-        3. **Configurar Network Access:**
-           - En MongoDB Atlas → 'Network Access'
-           - Agrega IP: `0.0.0.0/0` (permitir todas) o la IP específica de Streamlit Cloud
-        
-        4. **Redeploy la aplicación**
-        """)
-        st.stop()
-    
     # Métricas clave
-    try:
-        total_riesgos_bruto = collection_risk_records.count_documents({})
-        criticos = collection_risk_records.count_documents({"criticidad": "Crítico", "$or": [{"date_completed": {"$exists": False}}, {"date_completed": ""}, {"date_completed": None}]})
-        altos = collection_risk_records.count_documents({"criticidad": "Alto", "$or": [{"date_completed": {"$exists": False}}, {"date_completed": ""}, {"date_completed": None}]})
-        mitigados = len([r for r in collection_risk_records.find() if r.get('date_completed') and r.get('date_completed') != ''])
-        total_riesgos = total_riesgos_bruto - mitigados  # Riesgos activos
-        cumplimiento = 58  # Realista para nivel de madurez 2.4/5
-    except Exception as e:
-        st.error(f"❌ Error al acceder a la base de datos: {str(e)}")
-        st.info("Verifica que la URI de MongoDB esté correctamente configurada en los secrets de Streamlit Cloud")
-        st.stop()
+    total_riesgos_bruto = collection_risk_records.count_documents({})
+    criticos = collection_risk_records.count_documents({"criticidad": "Crítico", "$or": [{"date_completed": {"$exists": False}}, {"date_completed": ""}, {"date_completed": None}]})
+    altos = collection_risk_records.count_documents({"criticidad": "Alto", "$or": [{"date_completed": {"$exists": False}}, {"date_completed": ""}, {"date_completed": None}]})
+    mitigados = len([r for r in collection_risk_records.find() if r.get('date_completed') and r.get('date_completed') != ''])
+    total_riesgos = total_riesgos_bruto - mitigados  # Riesgos activos
+    cumplimiento = 58  # Realista para nivel de madurez 2.4/5
     
     col1, col2, col3, col4 = st.columns(4)
     with col1:
