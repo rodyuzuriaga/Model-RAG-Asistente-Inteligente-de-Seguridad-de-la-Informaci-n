@@ -559,8 +559,8 @@ def generate_advanced_rag_response(query, processed_records=None):
     try:
         # 1. Obtener estadísticas reales de la base de datos
         total_risks = collection_risk_records.count_documents({})
-        critical_risks = collection_risk_records.count_documents({"criticidad": "Crítico"})
-        high_risks = collection_risk_records.count_documents({"criticidad": "Alto"})
+        critical_risks = collection_risk_records.count_documents({"criticidad": "Crítico", "$or": [{"date_completed": {"$exists": False}}, {"date_completed": ""}, {"date_completed": None}]})
+        high_risks = collection_risk_records.count_documents({"criticidad": "Alto", "$or": [{"date_completed": {"$exists": False}}, {"date_completed": ""}, {"date_completed": None}]})
         mitigated_risks = len([r for r in collection_risk_records.find() if r.get('date_completed') and r.get('date_completed') != ''])
 
         # 2. Obtener datos específicos si están disponibles
@@ -625,7 +625,7 @@ Responde en español de forma clara y concisa.
     except Exception as e:
         # Fallback con datos básicos si falla la IA
         total_risks = collection_risk_records.count_documents({})
-        critical_risks = collection_risk_records.count_documents({"criticidad": "Crítico"})
+        critical_risks = collection_risk_records.count_documents({"criticidad": "Crítico", "$or": [{"date_completed": {"$exists": False}}, {"date_completed": ""}, {"date_completed": None}]})
 
         return f"""Hola, soy el Asistente de Seguridad de la Información de TechNova S.A.
 
