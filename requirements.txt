@@ -9,3 +9,6 @@ plotly
 PyPDF2
 python-docx
 openpyxl
+faker
+reportlab
+python-dateutil
