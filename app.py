@@ -544,7 +544,8 @@ try:
 except:
     # Fallback para desarrollo local
     GOOGLE_API_KEY = "tu_api_key_de_gemini_aqui"
-    MONGODB_URI = "mongodb+srv://usuario:password@cluster.mongodb.net/"
+    # URI sin SRV records para evitar problemas de DNS en Streamlit Cloud
+    MONGODB_URI = "mongodb://usuario:password@cluster.mongodb.net:27017/?ssl=true&replicaSet=atlas-xxx-shard-0&authSource=admin&retryWrites=true&w=majority"
 
 genai.configure(api_key=GOOGLE_API_KEY)
 client = MongoClient(MONGODB_URI)
