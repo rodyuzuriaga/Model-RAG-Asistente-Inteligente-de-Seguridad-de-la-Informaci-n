@@ -1,3 +1,11 @@
 streamlit
-pymongo
+supabase
 google-generativeai
+python-dotenv
+numpy
+pandas
+pymongo
+plotly
+PyPDF2
+python-docx
+openpyxl
