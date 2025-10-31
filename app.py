@@ -536,9 +536,18 @@ PROFESSIONAL_CSS = """
 
 st.markdown(PROFESSIONAL_CSS, unsafe_allow_html=True)
 
-# Configuraciones
-genai.configure(api_key="AIzaSyA5NslXJMWTt63y2MHs9daaCHK0ifVqAMU")
-client = MongoClient("mongodb+srv://rodyuzuriaga:jG8KeOea6LoeLbgi@cluster0.kz9c1wg.mongodb.net/")
+# Configuraciones - Usar st.secrets para compatibilidad con Streamlit Cloud
+try:
+    # Intentar obtener desde st.secrets (Streamlit Cloud)
+    GOOGLE_API_KEY = st.secrets["GEMINI"]["API_KEY"]
+    MONGODB_URI = st.secrets["MONGODB"]["URI"]
+except:
+    # Fallback para desarrollo local
+    GOOGLE_API_KEY = "tu_api_key_de_gemini_aqui"
+    MONGODB_URI = "mongodb+srv://usuario:password@cluster.mongodb.net/"
+
+genai.configure(api_key=GOOGLE_API_KEY)
+client = MongoClient(MONGODB_URI)
 db = client["security_db"]
 collection_evaluations = db["evaluations"]
 collection_risk_records = db["risk_records"]
