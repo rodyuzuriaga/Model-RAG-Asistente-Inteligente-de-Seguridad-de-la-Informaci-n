@@ -179,7 +179,7 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) par
 
 ## 👥 Contacto
 
-**Rodolfo Uzuriaga** - [LinkedIn](https://linkedin.com/in/rodyuzuriaga) - rodyuzuriaga@gmail.com
+**Rody Uzuriaga** - [LinkedIn](https://linkedin.com/in/rodyuzuriaga) - rodyuzuriaga@gmail.com
 
 **Proyecto Link**: [https://github.com/rodyuzuriaga/Model-RAG-Asistente-Inteligente-de-Seguridad-de-la-Informaci-n](https://github.com/rodyuzuriaga/Model-RAG-Asistente-Inteligente-de-Seguridad-de-la-Informaci-n)
 
